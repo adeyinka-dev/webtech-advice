@@ -1,9 +1,17 @@
 import {
-  ADVICE_API, topicError, normaliseAdvice, readSearch, filterAdvice,
-  translationURL, readTranslation, readSaved, collectionText, requestJSON,
+  ADVICE_API,
+  topicError,
+  normaliseAdvice,
+  readSearch,
+  filterAdvice,
+  translationURL,
+  readTranslation,
+  readSaved,
+  collectionText,
+  requestJSON,
 } from "./data.js";
 
-const find = id => document.getElementById(id);
+const find = (id) => document.getElementById(id);
 const card = find("advice-card");
 const adviceText = find("advice-text");
 const status = find("status");
@@ -15,9 +23,12 @@ const resultLimit = find("result-limit");
 const shortOnly = find("short-only");
 const savedKey = "webtech-saved-advice-v1";
 const palettes = [
-  ["#dbeaf1", "#1d1a45"], ["#ffe1de", "#702b3c"],
-  ["#e4e0fa", "#312b68"], ["#d9f0df", "#204f3a"],
-  ["#fff0c9", "#664b20"], ["#f6deeb", "#632c53"],
+  ["#dbeaf1", "#1d1a45"],
+  ["#ffe1de", "#702b3c"],
+  ["#e4e0fa", "#312b68"],
+  ["#d9f0df", "#204f3a"],
+  ["#fff0c9", "#664b20"],
+  ["#f6deeb", "#632c53"],
 ];
 let current = null;
 let saved = [];
@@ -33,10 +44,14 @@ const translations = new Map();
 find("year").textContent = new Date().getFullYear();
 
 function focusCard() {
-  // Focusing the selected content gives keyboard users the same destination.
   card.focus({ preventScroll: true });
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  card.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "center" });
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  card.scrollIntoView({
+    behavior: reduceMotion ? "instant" : "smooth",
+    block: "center",
+  });
 }
 
 function showAdvice(slip, moveFocus = false) {
@@ -51,9 +66,12 @@ function showAdvice(slip, moveFocus = false) {
   find("translation-text").textContent = "";
   find("translation-status").textContent = "";
   find("save-status").textContent = "";
-  find("personal-note").value = saved.find(item => item.advice === current.advice)?.note ?? "";
+  find("personal-note").value =
+    saved.find((item) => item.advice === current.advice)?.note ?? "";
   // Pick a different palette without retrying random values in a loop.
-  lastPalette = (lastPalette + 1 + Math.floor(Math.random() * (palettes.length - 1))) % palettes.length;
+  lastPalette =
+    (lastPalette + 1 + Math.floor(Math.random() * (palettes.length - 1))) %
+    palettes.length;
   card.style.setProperty("--card-bg", palettes[lastPalette][0]);
   card.style.setProperty("--card-fg", palettes[lastPalette][1]);
   if (moveFocus) focusCard();
@@ -66,14 +84,17 @@ async function getAdvice() {
   card.setAttribute("aria-busy", "true");
   status.textContent = "Finding a little wisdom…";
   try {
-    const data = await requestJSON(`${ADVICE_API}/advice?timestamp=${Date.now()}`);
+    const data = await requestJSON(
+      `${ADVICE_API}/advice?timestamp=${Date.now()}`,
+    );
     // A result selected while this request was running takes priority.
     if (version !== cardVersion) return;
     const previous = current?.advice;
     showAdvice(data.slip);
-    status.textContent = previous === current.advice
-      ? "The service returned the same advice. Give it a moment, then try again."
-      : "A fresh perspective, just for you.";
+    status.textContent =
+      previous === current.advice
+        ? "The service returned the same advice. Give it a moment, then try again."
+        : "A fresh perspective, just for you.";
   } catch (error) {
     if (version === cardVersion) status.textContent = error.message;
   } finally {
@@ -102,10 +123,13 @@ function renderResults(focusNew = false) {
     const li = document.createElement("li");
     const text = document.createElement("p");
     text.textContent = slip.advice;
-    li.append(text, makeButton("View", `View advice: ${slip.advice}`, () => {
-      showAdvice(slip, true);
-      status.textContent = "Here is your selected advice.";
-    }));
+    li.append(
+      text,
+      makeButton("View", `View advice: ${slip.advice}`, () => {
+        showAdvice(slip, true);
+        status.textContent = "Here is your selected advice.";
+      }),
+    );
     list.append(li);
   }
   const total = filtered.length;
@@ -122,7 +146,7 @@ searchInput.addEventListener("input", () => {
   find("search-error").textContent = "";
   searchInput.removeAttribute("aria-invalid");
 });
-searchForm.addEventListener("submit", async event => {
+searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (searchBusy) return;
   const error = topicError(searchInput.value);
@@ -143,7 +167,9 @@ searchForm.addEventListener("submit", async event => {
   find("result-list").replaceChildren();
   find("show-more").hidden = true;
   try {
-    const data = await requestJSON(`${ADVICE_API}/advice/search/${encodeURIComponent(searchedTopic)}`);
+    const data = await requestJSON(
+      `${ADVICE_API}/advice/search/${encodeURIComponent(searchedTopic)}`,
+    );
     searchResults = readSearch(data);
     visibleResults = Number(resultLimit.value);
     renderResults();
@@ -173,11 +199,12 @@ find("copy-advice").addEventListener("click", async () => {
     await navigator.clipboard.writeText(current.advice);
     status.textContent = "Copied to clipboard.";
   } catch {
-    status.textContent = "Copy is unavailable. Select the advice text and copy it manually.";
+    status.textContent =
+      "Copy is unavailable. Select the advice text and copy it manually.";
   }
 });
 
-find("translation-form").addEventListener("submit", async event => {
+find("translation-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = find("translate-button");
   if (!current || translationBusy) return;
@@ -202,9 +229,11 @@ find("translation-form").addEventListener("submit", async event => {
     find("translation-text").textContent = text;
     find("translation-text").lang = language;
     find("translation").hidden = false;
-    find("translation-status").textContent = "Translation ready, below the original advice.";
+    find("translation-status").textContent =
+      "Translation ready, below the original advice.";
   } catch (error) {
-    if (version === cardVersion) find("translation-status").textContent = error.message;
+    if (version === cardVersion)
+      find("translation-status").textContent = error.message;
   } finally {
     translationBusy = false;
     button.disabled = false;
@@ -243,19 +272,31 @@ function renderSaved() {
     const actions = document.createElement("div");
     actions.className = "saved-actions";
     actions.append(
-      makeButton("View / edit note", `View saved advice and edit note: ${item.advice}`, () => {
-        showAdvice(item, true);
-        status.textContent = "Loaded from your collection. Open Keep this advice to edit your note.";
-      }),
+      makeButton(
+        "View / edit note",
+        `View saved advice and edit note: ${item.advice}`,
+        () => {
+          showAdvice(item, true);
+          status.textContent =
+            "Loaded from your collection. Open Keep this advice to edit your note.";
+        },
+      ),
       makeButton("Remove", `Remove saved advice: ${item.advice}`, () => {
-        if (!persistSaved(saved.filter(entry => entry.advice !== item.advice))) {
-          find("saved-status").textContent = "Could not update this browser's storage. Your collection has not changed.";
+        if (
+          !persistSaved(saved.filter((entry) => entry.advice !== item.advice))
+        ) {
+          find("saved-status").textContent =
+            "Could not update this browser's storage. Your collection has not changed.";
           return;
         }
         renderSaved();
-        find("saved-status").textContent = "Advice removed from your collection.";
+        find("saved-status").textContent =
+          "Advice removed from your collection.";
         const remaining = find("saved-list").querySelectorAll("button");
-        (remaining[Math.min(index * 2, remaining.length - 1)] ?? find("saved-title")).focus();
+        (
+          remaining[Math.min(index * 2, remaining.length - 1)] ??
+          find("saved-title")
+        ).focus();
       }),
     );
     li.append(actions);
@@ -268,28 +309,34 @@ find("save-advice").addEventListener("click", () => {
   find("save-panel").open = true;
   find("personal-note").focus();
 });
-find("save-form").addEventListener("submit", event => {
+find("save-form").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!current) return;
   if (!find("save-form").reportValidity()) return;
   const entry = { ...current, note: find("personal-note").value.trim() };
-  const exists = saved.some(item => item.advice === current.advice);
+  const exists = saved.some((item) => item.advice === current.advice);
   if (!exists && saved.length >= 100) {
-    find("save-status").textContent = "Your collection holds up to 100 pieces. Download it or remove an item before adding more.";
+    find("save-status").textContent =
+      "Your collection holds up to 100 pieces. Download it or remove an item before adding more.";
     return;
   }
   const next = exists
-    ? saved.map(item => item.advice === entry.advice ? entry : item)
+    ? saved.map((item) => (item.advice === entry.advice ? entry : item))
     : [...saved, entry];
   if (!persistSaved(next)) {
-    find("save-status").textContent = "This browser could not save your advice. Storage may be full or blocked. Copy the advice to keep it.";
+    find("save-status").textContent =
+      "This browser could not save your advice. Storage may be full or blocked. Copy the advice to keep it.";
     return;
   }
   renderSaved();
-  find("save-status").textContent = exists ? "Your note has been updated." : "Saved to your collection.";
+  find("save-status").textContent = exists
+    ? "Your note has been updated."
+    : "Saved to your collection.";
 });
 find("export-saved").addEventListener("click", () => {
-  const blob = new Blob([collectionText(saved)], { type: "text/plain;charset=utf-8" });
+  const blob = new Blob([collectionText(saved)], {
+    type: "text/plain;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -299,13 +346,14 @@ find("export-saved").addEventListener("click", () => {
 });
 
 // Keep open tabs in step when a collection changes on this device.
-window.addEventListener("storage", event => {
+window.addEventListener("storage", (event) => {
   if (event.key !== savedKey && event.key !== null) return;
   try {
     saved = readSaved(event.newValue);
     renderSaved();
   } catch {
-    find("saved-status").textContent = "The collection changed in another tab but could not be read. Reload before saving more advice.";
+    find("saved-status").textContent =
+      "The collection changed in another tab but could not be read. Reload before saving more advice.";
   }
 });
 
@@ -314,6 +362,7 @@ try {
   renderSaved();
 } catch {
   renderSaved();
-  find("saved-status").textContent = "Saved advice could not be read. Nothing has been overwritten. You can still browse and copy advice.";
+  find("saved-status").textContent =
+    "Saved advice could not be read. Nothing has been overwritten. You can still browse and copy advice.";
 }
 getAdvice();
